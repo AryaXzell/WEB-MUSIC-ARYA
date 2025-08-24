@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pemutar Musik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+    <style>
+        /* Mengatur font dasar dan warna latar belakang */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d0c1e;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        /* Mengatur tampilan scrollbar agar lebih halus */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e1d2f;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a4964;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6a6a8e;
+        }
+    </style>
+</head>
+<body class="bg-[#0d0c1e] flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-xl bg-gradient-to-br from-[#1b1a30] to-[#2b2a40] rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden p-6 md:p-8">
+
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-xl font-bold text-gray-200">Now Playing</h1>
+        </div>
+
+        <div class="flex flex-col items-center mb-8">
+            <img id="album-art" src="https://placehold.co/400x400/2a2a2a/ffffff?text=Loading..." alt="Album Art" class="w-full max-w-xs rounded-2xl shadow-xl transform transition-transform duration-300 hover:scale-105 mb-6">
+            <h2 id="song-title" class="text-3xl font-extrabold text-center text-gray-100">Judul Lagu</h2>
+            <p id="artist-name" class="text-xl text-gray-400 text-center font-medium">Nama Artis</p>
+        </div>
+
+        <div class="flex flex-col items-center mb-8">
+            <div class="relative w-full h-1 bg-[#4a4964] rounded-full mb-2">
+                <div id="progress-bar" class="h-1 bg-[#36c97a] rounded-full transition-all duration-100 ease-linear shadow-[0_0_8px_rgba(54,201,122,0.5)]"></div>
+            </div>
+            <div class="flex w-full justify-between text-sm text-gray-400 mb-6">
+                <span id="current-time">0:00</span>
+                <span id="total-time">0:00</span>
+            </div>
+            <div class="flex items-center justify-center space-x-8">
+                <button id="prev-btn" class="text-gray-400 hover:text-white transition-colors duration-200 p-2 rounded-full hover:bg-[#3b3a50]">
+                    <i class="ph-bold ph-skip-back text-3xl"></i>
+                </button>
+                <button id="play-pause-btn" class="bg-[#36c97a] text-black w-16 h-16 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200">
+                    <i id="play-icon" class="ph-fill ph-play text-3xl"></i>
+                    <i id="pause-icon" class="ph-fill ph-pause text-3xl hidden"></i>
+                </button>
+                <button id="next-btn" class="text-gray-400 hover:text-white transition-colors duration-200 p-2 rounded-full hover:bg-[#3b3a50]">
+                    <i class="ph-bold ph-skip-forward text-3xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex justify-center mt-4">
+             <button id="loop-btn" class="text-gray-400 hover:text-white transition-colors duration-200 p-2 rounded-full hover:bg-[#3b3a50]">
+                 <i class="ph-bold ph-repeat text-2xl"></i>
+             </button>
+        </div>
+
+    </div>
+
+    <audio id="audio-player" preload="metadata"></audio>
+
+    <script>
+        // --- DATA LAGU ---
+        // SINI TEMPAT KAMU BISA MENGGANTI ATAU MENAMBAHKAN LAGU.
+        // Cukup tambahkan objek baru ke dalam array 'songs' ini.
+        const songs = [
+            {
+                title: "Multo",
+                artist: "Cup of Joe",
+                albumArt: "https://files.catbox.moe/me3l2b.jpg",
+                // GANTI URL INI DENGAN URL LAGU "Multo" DARI HOSTING KAMU
+                audioUrl: "https://files.catbox.moe/rb1gum.mp3"
+            },
+            {
+                title: "Sofia",
+                artist: "Clairo",
+                albumArt: "https://files.catbox.moe/3bg1r9.jpg",
+                // GANTI URL INI DENGAN URL LAGU "Sofia" DARI HOSTING KAMU
+                audioUrl: "https://files.catbox.moe/sdjzpu.mp3"
+            },
+            {
+                title: "Imagination",
+                artist: "Shawn Mendes",
+                albumArt: "https://files.catbox.moe/69tj9j.jpg",
+                // GANTI URL INI DENGAN URL LAGU "Imagination" DARI HOSTING KAMU
+                audioUrl: "https://files.catbox.moe/3xv6o1.mp3"
+            }
+        ];
+
+        // --- ELEMEN DOM DAN VARIABEL ---
+        const audioPlayer = document.getElementById('audio-player');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const progressBar = document.getElementById('progress-bar');
+        const currentTimeEl = document.getElementById('current-time');
+        const totalTimeEl = document.getElementById('total-time');
+        const songTitleEl = document.getElementById('song-title');
+        const artistNameEl = document.getElementById('artist-name');
+        const albumArtEl = document.getElementById('album-art');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const loopBtn = document.getElementById('loop-btn');
+
+        let currentSongIndex = 0;
+        let isLooping = false;
+
+        // --- FUNGSI UTAMA ---
+        // Memuat data lagu ke pemutar
+        function loadSong(index) {
+            const song = songs[index];
+            audioPlayer.src = song.audioUrl;
+            songTitleEl.textContent = song.title;
+            artistNameEl.textContent = song.artist;
+            albumArtEl.src = song.albumArt;
+
+            // --- FITUR BARU: Mengirim data ke control center via Media Session API ---
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: song.title,
+                    artist: song.artist,
+                    album: 'Playlist',
+                    artwork: [
+                        // Pastikan URL thumbnail dapat diakses publik
+                        { src: song.albumArt, sizes: '512x512', type: 'image/jpeg' }
+                    ]
+                });
+            }
+        }
+
+        // Format waktu dari detik menjadi M:SS
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // --- EVENT LISTENERS ---
+        // Pemuatan awal
+        window.onload = () => {
+            loadSong(currentSongIndex);
+        };
+
+        // Tombol Play/Pause
+        playPauseBtn.addEventListener('click', () => {
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            } else {
+                audioPlayer.pause();
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            }
+        });
+
+        // Tombol Sebelumnya
+        prevBtn.addEventListener('click', () => {
+            currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+            loadSong(currentSongIndex);
+            audioPlayer.play();
+        });
+
+        // Tombol Berikutnya
+        nextBtn.addEventListener('click', () => {
+            currentSongIndex = (currentSongIndex + 1) % songs.length;
+            loadSong(currentSongIndex);
+            audioPlayer.play();
+        });
+
+        // Tombol Loop
+        loopBtn.addEventListener('click', () => {
+            isLooping = !isLooping;
+            audioPlayer.loop = isLooping;
+            // Mengubah warna tombol untuk menunjukkan status loop
+            if (isLooping) {
+                loopBtn.classList.add('text-green-500');
+                loopBtn.classList.remove('text-gray-400');
+            } else {
+                loopBtn.classList.add('text-gray-400');
+                loopBtn.classList.remove('text-green-500');
+            }
+        });
+
+        // Event saat metadata lagu dimuat
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            totalTimeEl.textContent = formatTime(audioPlayer.duration);
+        });
+
+        // Event saat waktu lagu berjalan (untuk progress bar)
+        audioPlayer.addEventListener('timeupdate', () => {
+            const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            progressBar.style.width = `${progress}%`;
+            currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+        });
+
+        // Event saat lagu selesai
+        audioPlayer.addEventListener('ended', () => {
+            playIcon.classList.remove('hidden');
+            pauseIcon.classList.add('hidden');
+            progressBar.style.width = '0%';
+            currentTimeEl.textContent = '0:00';
+            // Jika mode loop tidak aktif, pindah ke lagu berikutnya
+            if (!isLooping) {
+                currentSongIndex = (currentSongIndex + 1) % songs.length;
+                loadSong(currentSongIndex);
+                audioPlayer.play();
+            }
+        });
+    </script>
+</body>
+</html>
